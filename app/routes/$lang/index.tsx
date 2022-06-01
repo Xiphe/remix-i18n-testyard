@@ -11,9 +11,7 @@ export default function IndexRoute() {
       <br />
       <Link to="/en">EN</Link>
       <br />
-      <Link to="deep" prefetch="intent">
-        Go Deeper
-      </Link>
+      <Link to="deep">Go Deeper</Link>
     </>
   );
 }

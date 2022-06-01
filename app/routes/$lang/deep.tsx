@@ -1,12 +1,22 @@
 import { Link } from '@remix-run/react';
 import { useTranslation } from 'react-i18next';
 
+// TODO: PRELOAD jo manually
+
 export const handle = {
   i18n: 'jo',
 };
 
 export default function IndexRoute() {
-  let { t, i18n } = useTranslation('jo');
+  let { t, i18n, ready } = useTranslation('jo');
+
+  if (!ready) {
+    return (
+      <h1>
+        LOADINGLOADINGLOADINGLOADINGLOADINGLOADINGLOADINGLOADINGLOADINGLOADINGLOADING
+      </h1>
+    );
+  }
 
   return (
     <>

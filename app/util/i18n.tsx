@@ -6,7 +6,6 @@ import type { RouteModules as ReactRouteModules } from '@remix-run/react/routeMo
 import type { BackendModule, InitOptions, ResourceKey } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { getI18nManifest } from './i18n.server';
-import { useEffect, useState } from 'react';
 
 export const config: Omit<InitOptions, 'supportedLngs'> & {
   supportedLngs: string[];
