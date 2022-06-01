@@ -98,7 +98,7 @@ async function run() {
             try {
               contents = JSON.parse(contents);
             } catch (err) {
-              handleJsonError(err, contents, args.path);
+              return handleJsonError(err, contents, args.path);
             }
 
             const m = args.path.match(i18nRgx);
@@ -153,10 +153,12 @@ function handleJsonError(err, contents, path) {
     };
   }
   let m = err.message.match(
-    /Unexpected (token .|\n|\r)* in JSON at position ([0-9]+)/m,
+    /Unexpected (token (.|\n|\r)*) in JSON at position ([0-9]+)/m,
   );
   if (!m) {
-    m = err.message.match(/Unexpected ([a-z]+) in JSON at position ([0-9]+)/m);
+    m = err.message.match(
+      /Unexpected (([a-z]+)) in JSON at position ([0-9]+)/m,
+    );
   }
   if (!m) {
     return {
@@ -164,7 +166,7 @@ function handleJsonError(err, contents, path) {
     };
   }
   const lines = contents.split(/\n|\r|\n\r/g);
-  let pos = parseInt(m[2], 10);
+  let pos = parseInt(m[3], 10);
   let line = 1;
   while (pos > lines[0].length) {
     pos -= lines[0].length + 1;

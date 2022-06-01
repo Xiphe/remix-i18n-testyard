@@ -7,6 +7,7 @@
     "dev": "remix build && run-p dev:*",
     "dev:node": "cross-env NODE_ENV=development node-dev server/server.ts",
     "dev:remix": "remix watch",
+    "dev:i18n": "node scripts/i18nContentHash.js --watch",
     "start": "cross-env NODE_ENV=production node ./server.js"
   },
   "dependencies": {
