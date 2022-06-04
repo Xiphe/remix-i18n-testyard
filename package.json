@@ -4,7 +4,10 @@
   "sideEffects": false,
   "scripts": {
     "build": "remix build",
-    "dev": "remix dev",
+    "build:i18n": "compile-i18n locales public/locales -m app/manifest-i18n.json",
+    "dev": "run-p dev:*",
+    "dev:remix": "remix dev",
+    "dev:i18n": "npm run build:i18n -- --watch",
     "start": "remix-serve build"
   },
   "dependencies": {
@@ -24,12 +27,16 @@
     "@remix-run/dev": "^1.5.1",
     "@remix-run/eslint-config": "^1.5.1",
     "@types/i18next-fs-backend": "1.1.2",
+    "@types/node": "17.0.38",
     "@types/react": "^17.0.45",
     "@types/react-dom": "^17.0.17",
+    "cmpl": "0.0.6",
+    "esbuild-register": "3.3.2",
     "eslint": "^8.15.0",
+    "npm-run-all": "4.1.5",
     "typescript": "^4.6.4"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=16"
   }
 }

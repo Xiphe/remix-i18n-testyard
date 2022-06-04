@@ -2,5 +2,7 @@ node_modules
 
 /.cache
 /build
+/app/manifest-i18n.json
 /public/build
+/public/locales
 .env
