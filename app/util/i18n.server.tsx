@@ -1,36 +1,34 @@
 import type { EntryContext } from '@remix-run/server-runtime';
-import type { LinkDescriptor } from '@remix-run/node';
-import type { Options as BackendOptions } from '~/../packages/i18next-hashed/server';
-import type { I18nHandle } from '~/util/i18n';
+import type { Options as BackendOptions } from '~/../packages/i18next-hashed/src/backend.server';
+import type { ComponentType } from 'react';
+import type { RouteWithValidI18nHandle } from '~/util/i18n';
+import { hasValidI18nHandle, getLngFromPathname } from '~/util/i18n';
+import { createContext, useContext } from 'react';
 import { createInstance } from 'i18next';
-import { initReactI18next } from 'react-i18next';
+import { initReactI18next, I18nextProvider } from 'react-i18next';
 import { config as i18nConfig, getRouteNamespaces } from '~/util/i18n';
-import { I18NextHashedServerBackend } from '~/../packages/i18next-hashed/server';
+import { I18NextHashedServerBackend } from '~/../packages/i18next-hashed/src/backend.server';
 import i18nManifest from '../manifest-i18n.json';
 import { resolve } from 'node:path';
 
-const backend = new I18NextHashedServerBackend();
-const backendOpts: BackendOptions = {
-  localesDir: resolve(process.cwd(), 'public/locales'),
-  manifest: i18nManifest,
-};
-backend.init({} as any, backendOpts, undefined);
-
-export function I18nHandoff() {
-  return (
-    <script
-      dangerouslySetInnerHTML={{
-        __html: `window.__i18next_hashed_manifest=${JSON.stringify(
-          i18nManifest,
-        )};document.currentScript.remove()`,
-      }}
-    />
-  );
+interface Context {
+  backend: I18NextHashedServerBackend;
+  routeNamespaces: Record<string, string | string[]>;
 }
+const I18nContext = createContext<Context | undefined>(undefined);
 
-export function I18nInitialPreload() {
+export function I18nMeta() {
+  const { backend, routeNamespaces } = useI18nContext();
   return (
     <>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `window.__i18next_data=${JSON.stringify({
+            manifest: i18nManifest,
+            routeNamespaces,
+          })};document.currentScript.remove()`,
+        }}
+      />
       {[...backend.prefetch].map((lng) => (
         <link
           key={lng}
@@ -44,30 +42,18 @@ export function I18nInitialPreload() {
   );
 }
 
-export function getI18nLinks(): LinkDescriptor[] {
-  return [];
+function useI18nContext() {
+  const ctx = useContext(I18nContext);
+  if (!ctx) {
+    throw new Error('Must useI18nContext inside setup');
+  }
+  return ctx;
 }
 
-export async function getLinkHeader(request: Request, handle: I18nHandle) {
-  const lng = getLngFromPathname(new URL(request.url).pathname);
-  const ns = Array.isArray(handle.i18n) ? handle.i18n : [handle.i18n];
-  await Promise.all(
-    ns.map(
-      (n) =>
-        new Promise<void>((res, rej) =>
-          backend.read(lng, n, (err, c) => (err ? rej(err) : res())),
-        ),
-    ),
-  );
-
-  return {
-    Link: [...backend.prefetch]
-      .map((p) => `</locales/${p}>; rel="prefetch"; as="fetch"`)
-      .join(', '),
-  };
-}
-
-export async function setup(request: Request, context: EntryContext) {
+export async function setup(
+  request: Request,
+  context: EntryContext,
+): Promise<Response | ComponentType> {
   const { pathname } = new URL(request.url);
   if (pathname === '/') {
     // TODO: BETTER LNG-REDIRECT
@@ -80,6 +66,11 @@ export async function setup(request: Request, context: EntryContext) {
     });
   }
 
+  const backend = new I18NextHashedServerBackend();
+  const backendOpts: BackendOptions = {
+    localesDir: resolve(process.cwd(), 'public/locales'),
+    manifest: i18nManifest,
+  };
   const i18n = createInstance().use(initReactI18next).use(backend);
 
   const errors: Error[] = [];
@@ -110,12 +101,19 @@ export async function setup(request: Request, context: EntryContext) {
     );
   }
 
-  return i18n;
-}
+  const routeNamespaces = Object.fromEntries(
+    Object.entries(context.routeModules)
+      .filter((entry): entry is [string, RouteWithValidI18nHandle] =>
+        hasValidI18nHandle(entry[1]),
+      )
+      .map(([id, { handle }]) => [id, handle.i18n]),
+  );
 
-function getLngFromPathname(pathname: string) {
-  const maybeLang = pathname.split('/')[1];
-  return i18nConfig.supportedLngs.includes(maybeLang)
-    ? maybeLang
-    : i18nConfig.supportedLngs[0];
+  return function i18nProvider({ children }) {
+    return (
+      <I18nContext.Provider value={{ backend, routeNamespaces }}>
+        <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
+      </I18nContext.Provider>
+    );
+  };
 }

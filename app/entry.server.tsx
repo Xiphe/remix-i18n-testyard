@@ -1,7 +1,6 @@
 import type { EntryContext } from '@remix-run/server-runtime';
 import { RemixServer } from '@remix-run/react';
 import { renderToString } from 'react-dom/server';
-import { I18nextProvider } from 'react-i18next';
 import { setup as setupI18n } from '~/util/i18n.server';
 
 export default async function handleRequest(
@@ -10,16 +9,15 @@ export default async function handleRequest(
   headers: Headers,
   context: EntryContext,
 ) {
-  console.log('HANDLE REQUEST');
-  const i18n = await setupI18n(request, context);
-  if (i18n instanceof Response) {
-    return i18n;
+  const I18n = await setupI18n(request, context);
+  if (I18n instanceof Response) {
+    return I18n;
   }
 
   let markup = renderToString(
-    <I18nextProvider i18n={i18n}>
+    <I18n>
       <RemixServer context={context} url={request.url} />
-    </I18nextProvider>,
+    </I18n>,
   );
 
   headers.set('Content-Type', 'text/html');

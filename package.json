@@ -4,7 +4,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "remix build",
-    "build:i18n": "compile-i18n locales public/locales -m app/manifest-i18n.json",
+    "build:i18n": "./packages/i18next-hashed/dist/cli.cjs locales public/locales -m app/manifest-i18n.json",
     "dev": "run-p dev:*",
     "dev:remix": "remix dev",
     "dev:i18n": "npm run build:i18n -- --watch",
